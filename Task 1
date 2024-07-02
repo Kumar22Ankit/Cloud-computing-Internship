@@ -1,0 +1,132 @@
+Cloud Counseleage Internship 
+Cloud Computing Domain : 
+Name : Ankit Kumar
+Intern ID: IP -40221
+
+  ## Task 1 :
+
+  1. Set Up AWS EC2 Instance:
+   - Launch a free tier AWS EC2 instance.
+   - Install MongoDB on the EC2 instance.
+**********************************************************************************************************************
+sudo su                       # root user 
+sudo yum update -y              
+sudo yum upgrade
+
+ sudo vi /etc/yum.repos.d/mongodb-org-7.0.repo              # install mongo db 
+ sudo yum install -y mongodb-org
+ sudo service mongod start
+ sudo systemctl enable mongod
+
+sudo yum install -y aws-cli                 # install aws cli in the server 
+aws configure            # enter the credentials like : access kkey , secret key , default region 
+
+sudo nano /home/ec2-user/backup.sh           # write the backup script 
+  #!/bin/bash
+
+ # ****************************************** #BACKUP SCRIPT# ************************************************* 
+# Variables
+BACKUP_PATH="/var/backups/mongodb"
+DATE=$(date +%Y-%m-%d-%H-%M-%S)
+BACKUP_NAME="mongodb-backup-$DATE"
+S3_BUCKET_NAME="your-s3-bucket-name"
+
+# Create backup directory
+mkdir -p $BACKUP_PATH
+
+# Backup MongoDB
+mongodump --out $BACKUP_PATH/$BACKUP_NAME
+
+# Upload to S3
+aws s3 cp $BACKUP_PATH/$BACKUP_NAME s3://$S3_BUCKET_NAME/$BACKUP_NAME --recursive
+
+# Cleanup local backups older than 7 days
+find $BACKUP_PATH -type d -mtime +7 -exec rm -rf {} \;
+ 
+#Replace the S3_Bucket_Name
+**************************************************************************************************************
+chmod +x backup.sh          
+
+# Schedule Backup with Cron
+sudo yum install cronie -y
+ sudo systemctl start crond
+ sudo systemctl enable crond
+ crontab -e
+ crontab -l
+ crontab -e
+ 0 2 * * * /path/to/backup.sh      # schedule the corntab (eg. daily at 2 am )
+ sudo systemctl status crond
+
+ mkdir mongodb-backup
+ cd mongodb-backup
+ ************************************************************************************************************ 
+ touch Dockerfile
+ nano Dockerfile
+  # Use an official MongoDB image
+FROM mongo:4.0
+
+# Install AWS CLI
+RUN apt-get update && \
+    apt-get install -y python3-pip && \
+    pip3 install awscli
+
+# Create a directory for the backup script
+RUN mkdir -p /usr/src/app
+
+# Copy the backup script into the container
+COPY backup.sh /usr/src/app/backup.sh
+
+# Make the backup script executable
+RUN chmod +x /usr/src/app/backup.sh
+
+# Set the working directory
+WORKDIR /usr/src/app
+
+# Run the backup script (for demonstration purposes; usually, you would run this in a cron job)
+CMD ["./backup.sh"]
+*************************************************************************************************************
+touch backup.sh
+************************************************************************************************************* 
+nano backup.sh 
+#!/bin/bash
+
+# Variables
+BACKUP_PATH="/data/backups"
+DATE=$(date +%Y-%m-%d-%H-%M-%S)
+BACKUP_NAME="mongodb-backup-$DATE"
+S3_BUCKET_NAME="your-s3-bucket-name"
+
+# Create backup directory
+mkdir -p $BACKUP_PATH
+
+# Backup MongoDB
+mongodump --out $BACKUP_PATH/$BACKUP_NAME
+
+# Upload to S3
+aws s3 cp $BACKUP_PATH/$BACKUP_NAME s3://$S3_BUCKET_NAME/$BACKUP_NAME --recursive
+
+# Cleanup local backups older than 7 days
+find $BACKUP_PATH -type d -mtime +7 -exec rm -rf {} \;
+ #Replace the S3_Bucket_Name
+***************************************************************************************************************  
+chmod +x backup.sh
+docker build -t mongodb-backup .
+sudo yum update -y
+sudo amazon-linux-extras install docker -y
+sudo yum install docker -y
+sudo service docker start
+sudo systemctl enable docker 
+sudo usermod -a -G docker ec2-user
+docker --version
+docker build -t mongodb-backup .
+docker run --name mongodb-backup-container -e 
+  AWS_ACCESS_KEY_ID=your_aws_access_key_id -e                    # enter the aws access key 
+  AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key -e            # enter the secret key 
+  AWS_DEFAULT_REGION=your_aws_region mongodb-backup              # enter the default region
+ docker run --name mongodb-backup-container -e 
+  docker ps                 # to check the running docker containers 
+
+
+*********************************************************************************************************************************************
+
+Task 1 completed 
