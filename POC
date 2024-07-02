@@ -1,0 +1,24 @@
+POC (Proof Of Concept)
+To create a proof of concept (POC) for an effective automatic MongoDB backup method, we'll follow these steps:
+
+1. Set Up AWS EC2 Instance: 
+   - Launch a free tier AWS EC2 instance.
+   - Install MongoDB on the EC2 instance.
+
+2.  Automate MongoDB Backup: 
+   - Use a cron job to schedule regular backups.
+   - Store backups in AWS S3 for durability and availability.
+
+3.  Create Backup Script: 
+   - Write a script to back up the MongoDB database and upload it to S3.
+   - Ensure the script handles different backup and failure scenarios.
+
+4.  Verify and Monitor Backups: 
+   - Verify backups to ensure they are correctly created and stored.
+   - Implement monitoring and alerting for backup failures.
+
+Conclusion
+
+This POC provides a scalable and automated solution for backing up MongoDB databases using AWS services.
+It ensures that Mr. John Doe can focus on more productive tasks without worrying about database backups.
+The use of cron jobs for scheduling, AWS CLI for interacting with S3, and monitoring through CloudWatch creates a robust backup system.
