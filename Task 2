@@ -18,3 +18,203 @@ Step 2: Create an Architecture Flow Diagram
 
 follow the link to access the architecture flow diagram : https://drive.google.com/file/d/1hxSn_diDhp4NCTmG07g3eXK80OBr__lY/view?usp=sharing
 
+Step 3: Deploy the Application on the Cloud
+
+1. Set Up IAM Roles : 
+
+Create IAM roles with necessary permissions to access EC2, S3, and other required AWS services.
+*************************************************************************************
+Create an IAM Role for EC2:
+
+Open the IAM Management Console.
+Click on "Roles" and then "Create role".
+Choose "EC2" as the trusted entity.
+Attach the following policies:
+AmazonEC2FullAccess
+AmazonS3FullAccess
+AmazonEC2ContainerRegistryFullAccess
+Name the role ec2-backup-role.
+***************************************************************************************
+Create an IAM Role for CodePipeline:
+
+Open the IAM Management Console.
+Click on "Roles" and then "Create role".
+Choose "CodePipeline" as the trusted entity.
+Attach the following policies:
+AWSCodePipelineFullAccess
+AWSCodeBuildAdminAccess
+Name the role codepipeline-backup-role
+****************************************************************************************
+
+2. Connect to the EC2 Instance:
+
+Use SSH to connect to the instance:  ssh -i /path/to/your-key-pair.pem ec2-user@your-ec2-public-dns  #enter public dns from your credentials 
+
+Install Docker on the EC2 Instance:
+
+sudo yum update -y
+sudo yum install -y docker
+sudo service docker start
+sudo usermod -a -G docker ec2-user
+logout
+
+
+Reconnect to the EC2 Instance:
+
+ssh -i /path/to/your-key-pair.pem ec2-user@your-ec2-public-dns
+
+Push Docker Image to Amazon ECR :
+
+Create an ECR Repository: aws ecr create-repository --repository-name mongodb-backup
+
+Authenticate Docker to ECR: $(aws ecr get-login --no-include-email --region your-region)   # enter the credentials accordingly .
+
+Tag and Push the Docker Image:  
+                                         #enter the credentials accordingly.
+docker tag mongodb-backup:latest your-account-id.dkr.ecr.your-region.amazonaws.com/mongodb-backup:latest
+docker push your-account-id.dkr.ecr.your-region.amazonaws.com/mongodb-backup:latest
+
+
+Run the Docker Container on EC2 
+
+Pull and Run the Docker Image:                                                      # enter the credentials 
+ docker pull your-account-id.dkr.ecr.your-region.amazonaws.com/mongodb-backup:latest
+docker run --name mongodb-backup-container \
+    -e AWS_ACCESS_KEY_ID=your_aws_access_key_id \
+    -e AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key \
+    -e AWS_DEFAULT_REGION=your_aws_region \
+    your-account-id.dkr.ecr.your-region.amazonaws.com/mongodb-backup:latest
+
+
+5. Set Up S3 Bucket
+Create an S3 Bucket:
+
+Open the S3 Management Console.
+Click on "Create bucket".
+Enter a unique bucket name (e.g., mongodb-backups-2407).
+Choose the appropriate region.
+Configure other settings as needed.
+Click "Create bucket".
+Configure S3 Bucket Policies:
+
+Attach a bucket policy to allow the EC2 instance to upload backups.
+*******************************************************************************
+Example bucket policy: 
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::mongodb-backups-your-unique-name/*"
+    }
+  ]
+}
+************************************************************************************
+
+Step 4: Set Up CI/CD Pipeline
+
+1. Create a CodePipeline
+
+Open the CodePipeline Console:
+Click on "Create pipeline".
+
+Configure the Pipeline:
+
+Enter a pipeline name (e.g., mongodb-backup-pipeline).
+Select the default AWS CodePipeline service role or create a new one.
+
+Add Source Stage:
+
+Select "GitHub" as the source provider.
+Connect to your GitHub account and select the repository.
+Choose the branch to track (e.g., main).
+
+Add Build Stage:
+
+Select "AWS CodeBuild" as the build provider.
+Click on "Create project".
+Enter a project name (e.g., mongodb-backup-build).
+Select a managed image for the build environment (e.g., aws/codebuild/standard:4.0).
+
+Use the following buildspec.yml file:
+*****************************************************************************************
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+      - REPOSITORY_URI=your-account-id.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/mongodb-backup
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t mongodb-backup .
+      - docker tag mongodb-backup:latest $REPOSITORY_URI:latest
+  post_build:
+    commands:
+      - echo Pushing the Docker image...
+      - docker push $REPOSITORY_URI:latest
+      - echo Build completed on `date`
+
+*****************************************************************************************
+
+Add Deploy Stage:
+
+Select "AWS CodeDeploy" as the deploy provider.
+Create a new application and deployment group for your EC2 instances.
+Complete the Pipeline:
+
+Review the pipeline settings.
+Click "Create pipeline".
+
+2. Configure CodeDeploy
+Create Application and Deployment Group:
+
+Open the CodeDeploy Console.
+Create a new application (e.g., mongodb-backup-app).
+Create a new deployment group (e.g., mongodb-backup-deployment-group).
+Select the EC2 instances to deploy to.
+Choose the service role created earlier.
+Add Deployment Configuration:
+****************************************************************************
+Create an appspec.yml file in your repository:
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /home/ec2-user/mongodb-backup
+hooks:
+  AfterInstall:
+    - location: scripts/install_dependencies.sh
+      timeout: 300
+      runas: root
+  ApplicationStart:
+    - location: scripts/start_server.sh
+      timeout: 300
+      runas: ec2-user
+****************************************************************************
+
+Try Out the Application :
+
+1. Trigger Backups
+Manually trigger backups to verify the process by running the backup script in the Docker container and ensuring backups are uploaded to the S3 bucket.
+
+2. Automate Backups
+Use cron jobs or AWS Lambda to schedule and trigger automatic backups.
+
+Set Up Cron Job:
+
+SSH into your EC2 instance.
+
+Edit the cron table:
+crontab -e
+0 2 * * * docker exec mongodb-backup-container /path/to/backup-script.sh
+
+Conclusion
+This detailed guide covers the necessary steps for deploying your MongoDB backup solution to the cloud, setting up a CI/CD pipeline,
+and ensuring automated backups. By following these steps, you can automate the backup process, maintain cloud infrastructure efficiently,
+and avoid unnecessary costs. 
