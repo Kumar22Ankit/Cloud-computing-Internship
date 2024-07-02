@@ -1,0 +1,75 @@
+Cloud Counseleage Internship 
+Cloud Computing Domain : 
+Name : Ankit Kumar
+Intern ID: IP -40221
+
+  ## Task 3 :
+
+Scaling and Monitoring MongoDB Backup Application on AWS
+
+1. Create Alerts for Failure
+
+Set Up CloudWatch Alarms:
+
+Open the CloudWatch Management Console.
+Create an alarm for your EC2 instance.
+Monitor specific metrics like CPUUtilization, DiskReadOps, StatusCheckFailed, etc.
+Set threshold values and actions for notifications.
+Configure SNS (Simple Notification Service) to send alerts via email/SMS.
+
+Create SNS Topic for Notifications:
+
+Open the SNS Management Console.
+Create a topic (e.g., MongoDBBackupAlerts).
+Subscribe an email endpoint to the topic.
+
+2. Create Scaling Up / Scaling Down for the Application
+
+Set Up Auto Scaling Group:
+  Open the EC2 Auto Scaling Console.
+  Create an Auto Scaling group and attach it to your existing EC2 instance setup.
+  Define the desired number of instances, minimum, and maximum instances.
+
+Configure Scaling Policies:
+
+  Use CloudWatch alarms to trigger scaling actions.
+  Define policies for scaling up and scaling down based on metrics like CPU utilization.
+
+3. Create CloudWatch Alarms for Scaling:
+
+  Create alarms for scaling policies using CloudWatch.
+
+
+Create Logging for Analytics Purpose
+
+Set Up CloudWatch Logs:
+
+Configure your application to send logs to CloudWatch Logs.
+Install the CloudWatch Logs agent on your EC2 instance.
+
+Example CloudWatch Logs agent setup:
+
+sudo yum install -y awslogs
+sudo service awslogs start
+sudo chkconfig awslogs on
+
+
+Configure Log Group and Stream:
+
+  Open the CloudWatch Management Console.
+  Create a log group (e.g., /var/log/mongodb-backup).
+  Configure your application to write logs to this log group.
+
+Enable Detailed Monitoring and Log Aggregation:
+
+  Use CloudWatch Logs Insights for log analytics.
+  Enable detailed monitoring for more granular metrics.
+
+
+
+Conclusion : 
+This setup ensures your MongoDB backup application is resilient, scalable, and well-monitored, 
+providing insights into its performance and alerts in case of issues.
+
+******************************************************************************************************************
+Task 3 completed !
