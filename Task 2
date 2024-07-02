@@ -1,0 +1,18 @@
+Cloud Counseleage Internship 
+Cloud Computing Domain : 
+Name : Ankit Kumar
+Intern ID: IP -40221
+
+  ## Task 2 :
+Step 1: Research Available Tools :
+
+AWS Services:
+1.Amazon EC2: For running Docker containers.
+2.Amazon S3: For storing backups.
+3.AWS IAM: For managing access and permissions.
+4.AWS CloudFormation: For infrastructure as code.
+5.AWS CodePipeline: For CI/CD pipeline.
+6.AWS CodeBuild: For building and testing Docker images.
+
+Step 2: Create an Architecture Flow Diagram
+
